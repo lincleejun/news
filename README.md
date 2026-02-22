@@ -1,0 +1,2 @@
+# news
+automatically search news
