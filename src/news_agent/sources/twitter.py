@@ -110,14 +110,16 @@ class XSource(BaseSource):
         el = await tweet.query_selector(selector)
         if el:
             text = await el.inner_text()
-            text = (
-                text.strip()
-                .replace(",", "")
-                .replace("K", "000")
-                .replace("M", "000000")
-            )
+            text = text.strip().replace(",", "")
+            multiplier = 1
+            if text.endswith("K"):
+                multiplier = 1000
+                text = text[:-1]
+            elif text.endswith("M"):
+                multiplier = 1_000_000
+                text = text[:-1]
             try:
-                return int(float(text))
+                return int(float(text) * multiplier)
             except (ValueError, TypeError):
                 return 0
         return 0

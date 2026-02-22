@@ -73,7 +73,10 @@ class LLMFilter:
                 kwargs["api_base"] = self.api_base
 
             response = await litellm.acompletion(**kwargs)
-            content = response.choices[0].message.content
+            content = response.choices[0].message.content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[1]
+                content = content.rsplit("```", 1)[0]
             scores = json.loads(content)
 
             for item in scores:

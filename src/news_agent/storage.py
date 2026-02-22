@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
 
 import aiosqlite
 
@@ -14,6 +15,7 @@ class Storage:
         self._db: aiosqlite.Connection | None = None
 
     async def initialize(self) -> None:
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._db = await aiosqlite.connect(self.db_path)
         await self._db.execute("""
             CREATE TABLE IF NOT EXISTS articles (
@@ -77,7 +79,35 @@ class Storage:
 
     async def save_articles(self, articles: list[Article]) -> None:
         for article in articles:
-            await self.save_article(article)
+            await self._insert_article(article)
+        await self._db.commit()
+
+    async def _insert_article(self, article: Article) -> None:
+        await self._db.execute(
+            """INSERT OR REPLACE INTO articles
+            (id, source, title, url, summary, author, published_at, fetched_at,
+             score, comments_count, tags, llm_score, llm_reason,
+             is_recommended, is_hot, sent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                article.id,
+                article.source,
+                article.title,
+                article.url,
+                article.summary,
+                article.author,
+                article.published_at.isoformat() if article.published_at else None,
+                article.fetched_at.isoformat(),
+                article.score,
+                article.comments_count,
+                json.dumps(article.tags),
+                article.llm_score,
+                article.llm_reason,
+                int(article.is_recommended),
+                int(article.is_hot),
+                int(article.sent),
+            ),
+        )
 
     async def article_exists(self, article_id: str) -> bool:
         cursor = await self._db.execute(
@@ -95,6 +125,8 @@ class Storage:
         return [self._row_to_article(row) for row in rows]
 
     async def mark_sent(self, article_ids: list[str]) -> None:
+        if not article_ids:
+            return
         placeholders = ",".join("?" for _ in article_ids)
         await self._db.execute(
             f"UPDATE articles SET sent = 1 WHERE id IN ({placeholders})",

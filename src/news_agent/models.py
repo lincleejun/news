@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -12,7 +13,7 @@ class Article:
     summary: str = ""
     author: str = ""
     published_at: datetime | None = None
-    fetched_at: datetime = field(default_factory=datetime.now)
+    fetched_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     score: int = 0
     comments_count: int = 0
     tags: list[str] = field(default_factory=list)
@@ -25,5 +26,4 @@ class Article:
     @property
     def id(self) -> str:
         """Unique identifier based on source and URL."""
-        import hashlib
         return hashlib.sha256(f"{self.source}:{self.url}".encode()).hexdigest()[:16]
