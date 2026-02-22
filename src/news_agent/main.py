@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -42,9 +43,18 @@ def create_sources(config: dict[str, Any]) -> list:
             sources.append(cls(src_cfg))
     return sources
 
+def _set_api_keys(config: dict[str, Any]) -> None:
+    """Set LLM API keys from config if not already in environment."""
+    key_map = {"gemini": "GEMINI_API_KEY", "deepseek": "DEEPSEEK_API_KEY"}
+    for section, env_var in key_map.items():
+        key = config.get(section, {}).get("key")
+        if key and not os.environ.get(env_var):
+            os.environ[env_var] = key
+
 async def run_agent(config_path: str = "config.yaml") -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     config = load_config(config_path)
+    _set_api_keys(config)
     storage = Storage()
     await storage.initialize()
     try:

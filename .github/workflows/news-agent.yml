@@ -78,8 +78,7 @@ jobs:
                 - "https://feeds.arstechnica.com/arstechnica/index"
                 - "https://www.theverge.com/rss/index.xml"
           llm:
-            model: "deepseek/deepseek-chat"
-            api_base: "https://api.deepseek.com"
+            model: "gemini/gemini-2.0-flash"
             recommend_threshold: 7.0
           notifier:
             email:
@@ -111,7 +110,7 @@ jobs:
 
       - name: Run News Agent
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: uv run news-agent
 
       - name: Upload news output

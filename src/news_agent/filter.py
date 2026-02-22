@@ -34,7 +34,7 @@ SYSTEM_PROMPT = """你是一个科技资讯筛选助手。你的任务是对一�
 class LLMFilter:
     def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
-        self.model = self.config.get("model", "deepseek/deepseek-chat")
+        self.model = self.config.get("model", "gemini/gemini-2.0-flash")
         self.interests = self.config.get("interests", [])
         self.recommend_threshold = self.config.get("recommend_threshold", 7.0)
         self.api_base = self.config.get("api_base", None)
