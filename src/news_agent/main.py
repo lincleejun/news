@@ -8,6 +8,7 @@ import yaml
 from news_agent.filter import LLMFilter
 from news_agent.models import Article
 from news_agent.notifier.email import EmailNotifier
+from news_agent.notifier.file import FileNotifier
 from news_agent.notifier.telegram import TelegramNotifier
 from news_agent.storage import Storage
 
@@ -94,10 +95,16 @@ async def run_agent(config_path: str = "config.yaml") -> None:
         tg_cfg = notifier_config.get("telegram", {})
         if tg_cfg.get("enabled"):
             push_tasks.append(TelegramNotifier(tg_cfg).send(recommended))
+        file_cfg = notifier_config.get("file", {})
+        if file_cfg.get("enabled"):
+            push_tasks.append(FileNotifier(file_cfg).send(recommended))
         if push_tasks:
-            await asyncio.gather(*push_tasks)
+            results = await asyncio.gather(*push_tasks, return_exceptions=True)
+            for r in results:
+                if isinstance(r, Exception):
+                    logger.error(f"Notification failed: {r}")
             await storage.mark_sent([a.id for a in recommended])
-            logger.info("Notifications sent successfully!")
+            logger.info("Notifications sent (check logs for errors).")
     finally:
         await storage.close()
 

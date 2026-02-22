@@ -13,6 +13,7 @@ from news_agent.sources.base import BaseSource
 
 class RssSource(BaseSource):
     name = "rss"
+    timeout = 120
 
     def __init__(self, config: dict[str, Any] | None = None):
         super().__init__(config)

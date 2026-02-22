@@ -2,8 +2,8 @@ name: News Agent
 
 on:
   schedule:
-    - cron: '0 0 * * *'
-    - cron: '0 12 * * *'
+    - cron: '0 17 * * *'  # 09:00 US Pacific (UTC-8)
+    - cron: '0 0 * * *'   # 16:00 US Pacific (UTC-8)
   workflow_dispatch:
 
 jobs:
@@ -80,6 +80,7 @@ jobs:
           llm:
             model: "deepseek/deepseek-chat"
             api_base: "https://api.deepseek.com"
+            recommend_threshold: 7.0
           notifier:
             email:
               enabled: ${{ secrets.EMAIL_USERNAME != '' }}
@@ -92,6 +93,9 @@ jobs:
               enabled: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
               bot_token: "${{ secrets.TELEGRAM_BOT_TOKEN }}"
               chat_id: "${{ secrets.TELEGRAM_CHAT_ID }}"
+            file:
+              enabled: true
+              output_dir: "output"
           interests:
             - "AI/机器学习"
             - "编程/开发工具"
@@ -109,6 +113,15 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: uv run news-agent
+
+      - name: Upload news output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-output-${{ github.run_id }}
+          path: output/
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: Save SQLite database
         if: always()
