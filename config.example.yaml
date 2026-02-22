@@ -1,0 +1,72 @@
+sources:
+  hackernews:
+    enabled: true
+    max_items: 30
+  reddit:
+    enabled: true
+    subreddits: ["technology", "programming", "MachineLearning"]
+    client_id: ""
+    client_secret: ""
+  v2ex:
+    enabled: true
+    nodes: ["programmer", "create", "apple"]
+  x_com:
+    enabled: false
+    session_file: "data/x_session.json"
+  github:
+    enabled: true
+  wired:
+    enabled: true
+  rss:
+    enabled: true
+    feeds:
+      - "https://simonwillison.net/atom/everything/"
+      - "https://www.jeffgeerling.com/blog.xml"
+      - "https://krebsonsecurity.com/feed/"
+      - "https://daringfireball.net/feeds/main"
+      - "https://pluralistic.net/feed/"
+      - "https://lcamtuf.substack.com/feed"
+      - "https://mitchellh.com/feed.xml"
+      - "https://dynomight.net/feed.xml"
+      - "https://xeiaso.net/blog.rss"
+      - "https://devblogs.microsoft.com/oldnewthing/feed"
+      - "https://www.righto.com/feeds/posts/default"
+      - "https://lucumr.pocoo.org/feed.atom"
+      - "https://garymarcus.substack.com/feed"
+      - "https://rachelbythebay.com/w/atom.xml"
+      - "https://overreacted.io/rss.xml"
+      - "https://matklad.github.io/feed.xml"
+      - "https://eli.thegreenplace.net/feeds/all.atom.xml"
+      - "https://fabiensanglard.net/rss.xml"
+      - "https://www.troyhunt.com/rss/"
+      - "https://blog.miguelgrinberg.com/feed"
+      - "https://computer.rip/rss.xml"
+      - "https://www.tedunangst.com/flak/rss"
+      - "https://feeds.arstechnica.com/arstechnica/index"
+      - "https://www.theverge.com/rss/index.xml"
+
+llm:
+  model: "deepseek/deepseek-chat"
+  api_base: "https://api.deepseek.com"
+
+notifier:
+  email:
+    enabled: true
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    username: ""
+    password: ""
+    to: ""
+  telegram:
+    enabled: true
+    bot_token: ""
+    chat_id: ""
+
+interests:
+  - "AI/机器学习"
+  - "编程/开发工具"
+  - "硬件/数码"
+  - "科技新闻"
+  - "徒步/户外"
+  - "摄影"
+  - "国家地理/孤独星球"
