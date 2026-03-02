@@ -17,7 +17,7 @@ class FileNotifier:
     def __init__(self, config: dict[str, Any]):
         self.output_dir = config.get("output_dir", "output")
 
-    async def send(self, articles: list[Article]) -> None:
+    async def send(self, articles: list[Article], papers: list[Article] | None = None) -> None:
         now = datetime.now()
         period = "早间" if now.hour < 14 else "晚间"
         subject = f"[科技日报] {now.strftime('%Y-%m-%d')} {period}精选"
@@ -29,6 +29,7 @@ class FileNotifier:
             title=subject,
             date=now.strftime("%Y-%m-%d %H:%M"),
             articles=sorted_articles,
+            papers=papers or [],
         )
         output_path = Path(self.output_dir)
         output_path.mkdir(parents=True, exist_ok=True)

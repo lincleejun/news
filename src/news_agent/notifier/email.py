@@ -20,13 +20,13 @@ class EmailNotifier:
         self.password = config["password"]
         self.to_addr = config["to"]
 
-    async def send(self, articles: list[Article]) -> None:
+    async def send(self, articles: list[Article], papers: list[Article] | None = None) -> None:
         now = datetime.now()
         period = "早间" if now.hour < 14 else "晚间"
         subject = f"[科技日报] {now.strftime('%Y-%m-%d')} {period}精选"
         template = Template(TEMPLATE_PATH.read_text())
         sorted_articles = sorted(articles, key=lambda a: (a.is_hot, a.llm_score), reverse=True)
-        html = template.render(title=subject, date=now.strftime("%Y-%m-%d %H:%M"), articles=sorted_articles)
+        html = template.render(title=subject, date=now.strftime("%Y-%m-%d %H:%M"), articles=sorted_articles, papers=papers or [])
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = self.username

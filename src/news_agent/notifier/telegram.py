@@ -22,7 +22,7 @@ class TelegramNotifier:
         self.bot_token = config["bot_token"]
         self.chat_id = config["chat_id"]
 
-    async def send(self, articles: list[Article]) -> None:
+    async def send(self, articles: list[Article], papers: list[Article] | None = None) -> None:
         bot = Bot(token=self.bot_token)
         now = datetime.now()
         period = "早间" if now.hour < 14 else "晚间"
@@ -39,7 +39,20 @@ class TelegramNotifier:
             lines.append(
                 f"{i}\\. {hot}{source} [{title}]({a.url})\n   _{reason}_"
             )
-        count = _escape_md(str(len(articles)))
+
+        # Papers section
+        if papers:
+            lines.append(f"\n📄 *热门论文 Top {len(papers)}*\n")
+            for i, p in enumerate(papers, 1):
+                title = _escape_md(p.title)
+                summary_text = p.summary[:100] + "..." if len(p.summary) > 100 else p.summary
+                summary = _escape_md(summary_text)
+                lines.append(
+                    f"{i}\\. [{title}]({p.url})\n   _{summary}_"
+                )
+
+        total = len(articles) + (len(papers) if papers else 0)
+        count = _escape_md(str(total))
         lines.append(f"\n_共 {count} 条精选_")
         text = "\n\n".join(lines)
         await bot.send_message(

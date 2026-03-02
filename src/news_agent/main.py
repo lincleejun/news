@@ -31,9 +31,12 @@ def create_sources(config: dict[str, Any]) -> list:
     from news_agent.sources.rss import RssSource
     from news_agent.sources.wired import WiredSource
     from news_agent.sources.twitter import XSource
+    from news_agent.sources.ai_blogs import AiBlogsSource
+    from news_agent.sources.arxiv_papers import ArxivPapersSource
     source_map = {
         "hackernews": HackerNewsSource, "reddit": RedditSource, "v2ex": V2exSource,
         "github": GitHubTrendingSource, "rss": RssSource, "wired": WiredSource, "x_com": XSource,
+        "ai_blogs": AiBlogsSource, "arxiv_papers": ArxivPapersSource,
     }
     sources = []
     source_configs = config.get("sources", {})
@@ -45,7 +48,7 @@ def create_sources(config: dict[str, Any]) -> list:
 
 def _set_api_keys(config: dict[str, Any]) -> None:
     """Set LLM API keys from config if not already in environment."""
-    key_map = {"gemini": "GEMINI_API_KEY", "deepseek": "DEEPSEEK_API_KEY"}
+    key_map = {"gemini": "GEMINI_API_KEY", "deepseek": "DEEPSEEK_API_KEY", "github_models": "OPENAI_API_KEY"}
     for section, env_var in key_map.items():
         key = config.get(section, {}).get("key")
         if key and not os.environ.get(env_var):
@@ -87,33 +90,66 @@ async def run_agent(config_path: str = "config.yaml") -> None:
         if not unique_articles:
             logger.info("No new articles to process.")
             return
-        llm_filter = LLMFilter(config={**config.get("llm", {}), "interests": config.get("interests", [])})
-        scored_articles = await llm_filter.filter_articles(unique_articles)
+        # Separate special sources from regular articles
+        blog_articles = [a for a in unique_articles if a.source == "ai_blogs"]
+        paper_articles = [a for a in unique_articles if a.source == "arxiv_papers"]
+        other_articles = [a for a in unique_articles if a.source not in ("ai_blogs", "arxiv_papers")]
+
+        # Auto-recommend AI blogs
+        for a in blog_articles:
+            a.is_recommended = True
+            a.llm_score = 8.5
+            a.llm_reason = "AI公司官方博客"
+        logger.info(f"AI blogs auto-recommended: {len(blog_articles)} articles")
+
+        # Auto-recommend papers
+        for a in paper_articles:
+            a.is_recommended = True
+            a.llm_score = 8.5
+            a.llm_reason = "热门AI论文"
+        logger.info(f"Arxiv papers auto-recommended: {len(paper_articles)} articles")
+
+        # LLM filter other articles
+        scored_articles: list[Article] = list(blog_articles) + list(paper_articles)
+        if other_articles:
+            llm_filter = LLMFilter(config={**config.get("llm", {}), "interests": config.get("interests", [])})
+            scored_articles.extend(await llm_filter.filter_articles(other_articles))
+
         await storage.save_articles(scored_articles)
-        recommended = [a for a in scored_articles if a.is_recommended]
-        recommended.sort(key=lambda a: (a.is_hot, a.llm_score), reverse=True)
-        recommended = recommended[:10]
-        logger.info(f"Recommended: {len(recommended)} articles")
-        if not recommended:
+
+        # Split recommended news and papers for notification
+        recommended_news = [a for a in scored_articles if a.is_recommended and a.source != "arxiv_papers"]
+        recommended_news.sort(key=lambda a: (a.is_hot, a.llm_score), reverse=True)
+        recommended_news = recommended_news[:10]
+
+        recommended_papers = [a for a in scored_articles if a.is_recommended and a.source == "arxiv_papers"]
+        recommended_papers.sort(key=lambda a: a.score, reverse=True)
+        recommended_papers = recommended_papers[:10]
+
+        logger.info(f"Recommended: {len(recommended_news)} articles, {len(recommended_papers)} papers")
+
+        if not recommended_news and not recommended_papers:
             logger.info("No articles passed the quality threshold.")
             return
+
         notifier_config = config.get("notifier", {})
         push_tasks = []
         email_cfg = notifier_config.get("email", {})
         if email_cfg.get("enabled"):
-            push_tasks.append(EmailNotifier(email_cfg).send(recommended))
+            push_tasks.append(EmailNotifier(email_cfg).send(recommended_news, recommended_papers))
         tg_cfg = notifier_config.get("telegram", {})
         if tg_cfg.get("enabled"):
-            push_tasks.append(TelegramNotifier(tg_cfg).send(recommended))
+            push_tasks.append(TelegramNotifier(tg_cfg).send(recommended_news, recommended_papers))
         file_cfg = notifier_config.get("file", {})
         if file_cfg.get("enabled"):
-            push_tasks.append(FileNotifier(file_cfg).send(recommended))
+            push_tasks.append(FileNotifier(file_cfg).send(recommended_news, recommended_papers))
         if push_tasks:
             results = await asyncio.gather(*push_tasks, return_exceptions=True)
             for r in results:
                 if isinstance(r, Exception):
                     logger.error(f"Notification failed: {r}")
-            await storage.mark_sent([a.id for a in recommended])
+            all_sent = [a.id for a in recommended_news] + [a.id for a in recommended_papers]
+            await storage.mark_sent(all_sent)
             logger.info("Notifications sent (check logs for errors).")
     finally:
         await storage.close()

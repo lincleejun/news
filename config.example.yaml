@@ -10,6 +10,9 @@ sources:
   v2ex:
     enabled: true
     nodes: ["programmer", "create", "apple"]
+  arxiv_papers:
+    enabled: true
+    max_papers: 10
   x_com:
     enabled: false
     session_file: "data/x_session.json"

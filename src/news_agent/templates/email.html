@@ -5,12 +5,15 @@
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 680px; margin: 0 auto; padding: 20px; color: #333; }
 h1 { color: #1a1a1a; border-bottom: 2px solid #0066cc; padding-bottom: 10px; }
+h2 { color: #1a1a1a; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-top: 30px; }
 .article { margin: 16px 0; padding: 12px; border-left: 3px solid #ddd; }
 .article.hot { border-left-color: #ff4444; background: #fff5f5; }
+.paper { margin: 16px 0; padding: 12px; border-left: 3px solid #9b59b6; background: #faf5ff; }
 .source { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; background: #e8e8e8; color: #666; }
 .title a { color: #0066cc; text-decoration: none; font-weight: 600; }
 .title a:hover { text-decoration: underline; }
 .reason { color: #666; font-size: 14px; margin-top: 4px; }
+.summary { color: #555; font-size: 13px; margin-top: 4px; line-height: 1.5; }
 .score { color: #999; font-size: 12px; }
 .hot-badge { color: #ff4444; font-weight: bold; }
 .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #eee; color: #999; font-size: 12px; }
@@ -18,7 +21,7 @@ h1 { color: #1a1a1a; border-bottom: 2px solid #0066cc; padding-bottom: 10px; }
 </head>
 <body>
 <h1>{{ title }}</h1>
-<p>{{ date }} | 共 {{ articles|length }} 条精选</p>
+<p>{{ date }} | 共 {{ articles|length + papers|length }} 条精选</p>
 {% for article in articles %}
 <div class="article {{ 'hot' if article.is_hot else '' }}">
     {% if article.is_hot %}<span class="hot-badge">🔥 热门</span>{% endif %}
@@ -28,6 +31,16 @@ h1 { color: #1a1a1a; border-bottom: 2px solid #0066cc; padding-bottom: 10px; }
     <div class="score">评分: {{ article.llm_score }} | 热度: {{ article.score }}</div>
 </div>
 {% endfor %}
+{% if papers %}
+<h2>📄 热门论文 Top {{ papers|length }}</h2>
+{% for paper in papers %}
+<div class="paper">
+    <div class="title"><a href="{{ paper.url }}">{{ paper.title }}</a></div>
+    {% if paper.summary %}<div class="summary">{{ paper.summary[:200] }}{% if paper.summary|length > 200 %}...{% endif %}</div>{% endif %}
+    <div class="score">👍 {{ paper.score }}</div>
+</div>
+{% endfor %}
+{% endif %}
 <div class="footer">由 News Agent 自动生成</div>
 </body>
 </html>

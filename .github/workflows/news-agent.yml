@@ -50,6 +50,19 @@ jobs:
               enabled: true
             wired:
               enabled: true
+            arxiv_papers:
+              enabled: true
+              max_papers: 10
+            ai_blogs:
+              enabled: true
+              feeds:
+                - "https://www.anthropic.com/rss.xml"
+                - "https://openai.com/news/rss.xml"
+                - "https://blog.google/technology/google-deepmind/rss/"
+                - "https://huggingface.co/blog/feed.xml"
+                - "https://stability.ai/blog?format=rss"
+                - "https://txt.cohere.ai/rss/"
+                - "https://mistral.ai/feed/rss.xml"
             rss:
               enabled: true
               feeds:
@@ -77,8 +90,10 @@ jobs:
                 - "https://www.tedunangst.com/flak/rss"
                 - "https://feeds.arstechnica.com/arstechnica/index"
                 - "https://www.theverge.com/rss/index.xml"
+                - "https://petapixel.com/feed/"
           llm:
-            model: "gemini/gemini-2.0-flash"
+            model: "openai/gpt-4o-mini"
+            api_base: "https://models.inference.ai.azure.com"
             recommend_threshold: 7.0
           notifier:
             email:
@@ -110,7 +125,7 @@ jobs:
 
       - name: Run News Agent
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.GITHUB_TOKEN }}
         run: uv run news-agent
 
       - name: Upload news output
